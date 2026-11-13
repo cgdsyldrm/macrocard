@@ -1,5 +1,7 @@
 # MacroCard
 
+![MacroCard: programmable macro pad and wireless keyboard for the M5Stack Cardputer](docs/macrocard-cover.png)
+
 Programmable macro pad firmware for the M5Stack Cardputer v1.1 (StampS3A).
 It works as a USB keyboard and as a Bluetooth LE keyboard. Keys are
 programmed from a web page in your browser: `http://macrocard.local`.
@@ -34,8 +36,8 @@ reachable whichever way the pad is connected to the computer.
    rescans the list). Fn + ` or Fn + W closes the menu.
 2. When the footer shows `macrocard.local`, open **http://macrocard.local**
    on the computer (or the IP address shown on the Cardputer). The first time
-   the page asks for the **6-digit code** shown in the pad's footer (and in the
-   Fn + W menu); the browser remembers it.
+   the page asks for the pad's **6-digit access code** (see
+   [Access code](#access-code) below); the browser remembers it.
 3. Click a key on the picture of the Cardputer keyboard → **+ Shortcut** →
    press the combination on your computer keyboard (e.g. Ctrl+Shift+P).
    You can also add text, media keys and delays. **+ Profile** adds a profile,
@@ -45,6 +47,33 @@ reachable whichever way the pad is connected to the computer.
 
 Wi-Fi stays on (and reconnects after a restart) until you turn it off in
 the Fn + W menu. The header shows `WiFi` while the web page is reachable.
+
+### Access code
+
+Anyone on your Wi-Fi network can open `http://macrocard.local`. To stop
+them from changing your macros or making the pad type on your computer, the
+page only works with the pad's **6-digit access code**.
+
+- **Where to find it:** on the Cardputer's screen. The footer shows
+  `code 123456  macrocard.local` while Wi-Fi is connected, and the
+  **Fn + W** menu has an `Access code: 123456` line.
+- **First visit:** the page opens a box asking for the code. Type it and
+  press Enter. The browser remembers it, so you are asked again only in a
+  new browser or after clearing site data.
+- **What it protects:** loading and saving macros, the **Test** button and
+  **Firmware update**. Anything else the page shows (version, free memory,
+  layout list) does not reveal or change your macros.
+- **Wrong codes:** after 5 wrong codes the pad refuses every code for one
+  minute, so the code cannot be guessed by trying them all.
+- **How long it lasts:** the code is random, made once per device and stored
+  on the pad. It stays the same across restarts and Wi-Fi firmware updates.
+  A full reinstall over USB (M5Burner or esptool) erases it and the pad
+  makes a new one.
+- **Command line:** send it in the `X-Code` header, e.g.
+  `curl -H "X-Code: 123456" http://macrocard.local/api/config`.
+
+The code keeps out other people on your network. It is not encryption: the
+page uses plain HTTP, so only use the pad on a network you trust.
 
 **Sharing profiles:** **Export** (top bar) downloads all profiles, **Export
 profile** only the selected one. **Import** adds the profiles from such a file
@@ -130,11 +159,7 @@ with the code from the pad's screen:
 curl -H "X-Code: 123456" -F "firmware=@.pio/build/cardputer/firmware.bin" http://macrocard.local/api/update
 ```
 
-**Access code:** reading or changing the macros, the Test button and
-firmware updates all need the pad's 6-digit code, so other people on the
-same network cannot change the pad or make it type on your computer. After 5
-wrong codes the pad refuses codes for a minute. The code is random per
-device and is shown only on its screen.
+Firmware updates need the [access code](#access-code) like any other change.
 
 **Over USB (first install or recovery):** use PlatformIO from PowerShell or
 VS Code (ESP-IDF tools do not work from Git Bash). With USB plugged in,
