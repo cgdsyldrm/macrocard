@@ -1,0 +1,951 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MacroCard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* MacroCard - flat UI with the Cardputer's palette and black pill keys */
+:root {
+  --bg: #141517;        /* page: near black */
+  --card: #ececea;      /* containers: the case grey */
+  --surface: #ffffff;   /* things on a container: fields, chips, label strips */
+  --line: #dcdcd8;
+  --shell: #5b5d60;     /* the Cardputer's dark grey lower shell */
+  --card-shadow: 0 1px 0 #fff inset, 0 0 0 1px #d2d2ce, 0 8px 0 var(--shell), 0 10px 14px rgba(0,0,0,.15);
+  --ink: #18191b;
+  --muted: #74767a;
+  --key: #1c1d1f;
+  --key-hi: #2b2c2f;
+  --orange: #f26b21;    /* fn colour: the one accent */
+  --blue: #2a6fdb;      /* shift layer */
+  --green: #1fae76;
+  --red: #d93a32;
+  --font: "Lexend", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, monospace;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font); }
+button, select, input, textarea { font: inherit; color: inherit; }
+::selection { background: var(--orange); color: #fff; }
+
+/* ---------- header: a container like the cards ---------- */
+.top { max-width: 1100px; margin: 0 auto; padding: 18px 24px 0; }
+.top .in {
+  background: var(--card); border-radius: 16px; box-shadow: var(--card-shadow);
+  padding: 16px 24px; display: flex; align-items: center; gap: 16px;
+}
+.brand { flex: 1; min-width: 0; }
+.brand h1 { margin: 0; font-size: 19px; font-weight: 700; letter-spacing: -.01em; line-height: 1.2; }
+.brand h1 span { color: var(--orange); }
+#status { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dirty { font-size: 12.5px; color: var(--orange); font-weight: 500; white-space: nowrap; }
+.actions { display: flex; align-items: center; gap: 8px; }
+.actions a { font-size: 12.5px; color: var(--muted); text-decoration: none; margin-right: 6px; }
+.actions a:hover { color: var(--ink); }
+body.is-dirty .top button.primary:not(:disabled) { background: var(--orange); color: #fff; }
+
+/* ---------- buttons ---------- */
+button {
+  background: var(--surface); color: var(--ink); border: 0; border-radius: 999px; padding: 8px 16px;
+  cursor: pointer; font-weight: 500; transition: background .15s ease, color .15s ease, transform .06s ease;
+}
+button:hover { background: #f6f6f4; }
+button:active { transform: translateY(1px); }
+button:disabled { opacity: .4; cursor: default; transform: none; }
+button.primary { background: var(--key); color: #fff; }
+button.primary:hover { background: var(--key-hi); }
+button.danger { background: transparent; color: var(--red); }
+button.danger:hover { background: #fbe9e8; }
+button.danger.armed, button.danger.armed:hover { background: var(--red); color: #fff; }
+button.small { padding: 3px 10px; font-size: 12px; }
+
+/* ---------- fields ---------- */
+input, select, textarea {
+  background: var(--surface); border: 1px solid transparent; border-radius: 10px; padding: 8px 11px;
+  transition: border-color .15s ease;
+}
+input:hover, select:hover, textarea:hover { border-color: var(--line); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--orange); }
+input[type=checkbox] { accent-color: var(--orange); width: 16px; height: 16px; }
+input[type=color] { padding: 3px; width: 46px; height: 36px; }
+textarea { width: 100%; min-height: 64px; resize: vertical; }
+code { background: var(--surface); padding: 1px 6px; border-radius: 6px; font-family: var(--mono); font-size: 12px; }
+
+/* ---------- layout ---------- */
+main { max-width: 1100px; margin: 0 auto; padding: 18px 24px 80px; }
+.row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.card { background: var(--card); border-radius: 16px; padding: 22px 24px; margin-bottom: 26px; box-shadow: var(--card-shadow); }
+.card h2 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin: 0 0 14px; font-weight: 600; }
+label.f { display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; color: var(--muted); }
+.hint { color: var(--muted); font-size: 12.5px; max-width: 78ch; }
+.check { display: flex; align-items: center; gap: 9px; font-size: 13.5px; }
+
+/* ---------- settings (collapsed by default) ---------- */
+.settings { padding: 0; }
+.sumbar {
+  width: 100%; display: flex; align-items: center; gap: 14px; background: transparent; border-radius: 16px;
+  padding: 16px 24px; text-align: left;
+}
+.sumbar:hover { background: rgba(0,0,0,.025); }
+.sumbar:active { transform: none; }
+.sumtitle { font-size: 11.5px; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); font-weight: 600; }
+.sum { flex: 1; min-width: 0; color: var(--ink); font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sum i { font-style: normal; color: #b0b1b3; margin: 0 7px; }
+.chev { width: 9px; height: 9px; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(45deg) translate(-2px, -2px); transition: transform .2s ease; }
+.sumbar[aria-expanded=true] .chev { transform: rotate(-135deg) translate(-2px, -2px); }
+.setbody { padding: 4px 24px 22px; }
+.setgrid { display: grid; grid-template-columns: 1fr 1.4fr; gap: 14px; }
+.grp { background: var(--surface); border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px; }
+.grp h3 { margin: 0; font-size: 13px; font-weight: 600; }
+.grp input:not([type=checkbox]), .grp select { width: 100%; background: var(--card); }
+.grp .pair { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
+.grp .hint { margin: 0; }
+.hint:empty { display: none; }
+
+/* ---------- profiles ---------- */
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+.tab { display: flex; align-items: center; gap: 8px; }
+/* the selected profile wears its own colour, and so does its settings panel */
+.tab.active { background: var(--tc); color: var(--tink); }
+.tab.active .dot { background: var(--tink) !important; opacity: .55; }
+.pset {
+  --pc: #888;
+  display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; padding: 14px 16px; border-radius: 14px;
+  background: color-mix(in srgb, var(--pc) 13%, #fff); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pc) 55%, #fff);
+}
+.pset .grow { flex: 1 1 220px; }
+.pset input:not([type=color]) { width: 100%; }
+.pset .kbnote { flex: 1 1 320px; margin: 0; align-self: center; color: #45474a; }
+.pact { display: flex; gap: 8px; align-items: center; margin-left: auto; }
+.seg { display: inline-flex; background: var(--surface); border-radius: 999px; }
+.seg button { padding: 8px 12px; background: transparent; }
+.seg button:hover { background: var(--card); }
+#keysTitle .dot { margin: 0 6px 0 10px; vertical-align: 0; }
+#keysTitle b { color: var(--ink); font-weight: 600; letter-spacing: .08em; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+.layer { display: inline-flex; background: var(--surface); border-radius: 999px; padding: 3px; }
+.layer button { background: transparent; padding: 6px 14px; }
+.layer button.on { background: var(--blue); color: #fff; }
+
+/* ---------- keyboard: white printed-label strips, grey key rows ---------- */
+.kbwrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 6px; }
+.kb { display: flex; flex-direction: column; gap: 6px; user-select: none; padding: 2px 0 4px; }
+.kbcaps, .kbkeys { display: grid; grid-template-columns: repeat(14, 1fr); column-gap: 8px; }
+.kbcaps { background: var(--surface); border-radius: 6px; padding: 3px 8px; }
+.kbkeys { padding: 0 8px 8px; }
+.cap {
+  height: 20px; display: flex; align-items: center; justify-content: center; gap: 3px;
+  font-weight: 600; font-size: 13.5px; white-space: nowrap; color: var(--ink);
+}
+.cap sup { font-size: 9px; color: var(--blue); font-weight: 600; align-self: flex-start; margin-top: 1px; }
+.cap .arrow { color: var(--orange); font-size: 10px; }
+.cap.tag { font-size: 11px; font-weight: 500; color: var(--muted); }
+.cap.c-orange span, .cap.c-blue span, .cap.c-green span { font-size: 11px; color: #fff; border-radius: 5px; padding: 0 8px; line-height: 18px; }
+.cap.c-orange span { background: var(--orange); } .cap.c-blue span { background: var(--blue); } .cap.c-green span { background: var(--green); }
+.key { cursor: pointer; }
+.key .pill {
+  min-height: 34px; border-radius: 999px; background: var(--key); color: #e8e8e5;
+  display: flex; align-items: center; justify-content: center; padding: 3px 8px;
+  box-shadow: 0 2px 0 #000;
+  transition: background .12s ease, transform .06s ease, box-shadow .06s ease;
+}
+.key:hover .pill { background: var(--key-hi); }
+.key:active .pill { transform: translateY(2px); box-shadow: 0 0 0 #000; }
+.key .lbl { font-size: 10.5px; line-height: 1.15; text-align: center; overflow: hidden; max-height: 2.3em; }
+.key.set .pill { color: #fff; box-shadow: 0 2px 0 #000, inset 0 0 0 2px var(--pc, var(--orange)); }
+.key.sel .pill { box-shadow: 0 0 0 3px var(--card), 0 0 0 5px var(--orange); }
+.key.typed { cursor: default; }
+.key.typed .lbl { color: #8d8f92; font-size: 12px; }
+.key.typed:active .pill { transform: none; box-shadow: 0 2px 0 #000; }
+.key.off { cursor: default; }
+.key.off .pill { background: #cfcfcb; box-shadow: none; }
+.key.off:active .pill { transform: none; }
+
+/* ---------- key editor ---------- */
+.editor { display: none; }
+.editor.open { display: block; }
+.steps { display: flex; flex-direction: column; gap: 8px; margin: 14px 0; }
+.step { display: grid; grid-template-columns: 130px 1fr auto; gap: 10px; align-items: start; background: var(--surface); border-radius: 12px; padding: 10px; }
+.step select, .step input, .step textarea { background: var(--card); }
+.step .ctl { display: flex; gap: 4px; }
+.step .ctl button, .step .mods button { background: var(--card); }
+.rec { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.rec .box { min-width: 240px; padding: 7px 12px; border-radius: 10px; cursor: pointer; color: var(--muted); background: var(--card); border: 1px dashed #c9c9c5; }
+.rec .box.has { color: var(--ink); border-style: solid; border-color: transparent; }
+.rec .box.listening { color: var(--orange); border: 1px solid var(--orange); }
+.chip { display: inline-block; padding: 0 7px; margin: 1px 2px; border-radius: 6px; background: var(--key); color: #fff; font-size: 12px; line-height: 20px; }
+.mods { display: inline-flex; gap: 4px; }
+.mods button { padding: 4px 11px; font-size: 12px; }
+.step .mods button.on, .mods button.on { background: var(--blue); color: #fff; }
+
+/* ---------- access code dialog ---------- */
+.veil { position: fixed; inset: 0; z-index: 40; background: rgba(10,10,12,.72); display: grid; place-items: center; padding: 16px; }
+.veil[hidden] { display: none; }
+.codebox { width: min(380px, 100%); background: var(--card); border-radius: 16px; padding: 22px; display: flex; flex-direction: column; gap: 12px; box-shadow: var(--card-shadow); }
+.codebox h3 { margin: 0; font-size: 16px; }
+.codebox .hint { margin: 0; }
+.codebox .err { color: var(--red); }
+#codeInput { font-size: 26px; letter-spacing: .35em; text-align: center; padding: 10px; font-family: var(--mono); }
+button.link { background: transparent; color: var(--muted); padding: 8px 6px; font-size: 12.5px; }
+button.link:hover { background: transparent; color: var(--ink); }
+
+/* ---------- toast ---------- */
+#toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); z-index: 30; display: none;
+  background: var(--key); color: #fff; padding: 10px 18px; border-radius: 12px; max-width: 90vw; white-space: pre-wrap; font-size: 13.5px;
+}
+#toast.ok::before, #toast.err::before, #toast.warn::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 9px; vertical-align: 1px; }
+#toast.ok::before { background: var(--green); } #toast.err::before { background: var(--red); } #toast.warn::before { background: var(--orange); }
+
+/* ---------- phone ---------- */
+@media (max-width: 760px) {
+  .top { padding: 10px 10px 0; }
+  .top .in { padding: 12px 14px; gap: 10px; flex-wrap: wrap; border-radius: 14px; }
+  .actions { width: 100%; }
+  .actions .link { display: none; }
+  .actions button { flex: 1; }
+  main { padding: 14px 10px 80px; }
+  .card { padding: 16px 14px; border-radius: 14px; }
+  .kb { min-width: 880px; }  /* finger-sized keys; the keyboard scrolls sideways */
+  .step { grid-template-columns: 1fr; }
+  .setgrid, .grp .pair { grid-template-columns: 1fr; }
+  .sumbar { padding: 14px 14px; }
+  .setbody { padding: 0 12px 14px; }
+  .pact { margin-left: 0; width: 100%; }
+  .rec .box { min-width: 0; flex: 1 1 100%; }
+  label.f input:not([type=color]), label.f select { width: 100%; }
+  label.f { flex: 1 1 140px; }
+  button { padding: 10px 14px; }
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="in">
+    <div class="brand">
+      <h1>Macro<span>Card</span></h1>
+      <div id="status">Connecting…</div>
+    </div>
+    <span class="dirty" id="dirty"></span>
+    <div class="actions">
+      <button id="btnFw" class="link" title="Install a new MacroCard firmware (.bin)">Firmware update</button>
+      <input type="file" id="fwFile" accept=".bin,application/octet-stream" hidden>
+      <button id="btnImport" title="Add profiles from a file (yours or someone else's)">Import</button>
+      <button id="btnExport" title="Download all profiles as one file">Export</button>
+      <button class="primary" id="btnSave" disabled>Save</button>
+    </div>
+    <input type="file" id="importFile" accept=".json,application/json" multiple hidden>
+  </div>
+</header>
+<main>
+  <section class="card settings" id="settingsCard">
+    <button class="sumbar" id="setToggle" aria-expanded="false" aria-controls="setBody">
+      <span class="sumtitle">Settings</span>
+      <span class="sum" id="setSummary"></span>
+      <span class="chev" aria-hidden="true"></span>
+    </button>
+    <div class="setbody" id="setBody" hidden>
+      <div class="setgrid">
+        <div class="grp">
+          <h3>Device</h3>
+          <label class="f">Name shown over USB and Bluetooth<input id="devName"></label>
+          <label class="f">Delay between key presses (ms)<input id="delayMs" type="number" min="0" max="200"></label>
+          <p class="hint">A new name applies after the pad restarts.</p>
+        </div>
+        <div class="grp">
+          <h3>Typing text</h3>
+          <div class="pair">
+            <label class="f">Computer
+              <select id="os"><option value="windows">Windows</option><option value="mac">macOS</option><option value="linux">Linux</option></select></label>
+            <label class="f">Its keyboard layout<select id="layout"></select></label>
+          </div>
+          <label class="check"><input type="checkbox" id="unicode"> Type characters the layout lacks via Unicode input</label>
+          <p class="hint" id="unicodeHint"></p>
+          <p class="hint">Used by “Type text” steps and the Keyboard profile; shortcuts work on any layout.
+            Switch on the pad with <b>Fn + L</b>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>Profiles</h2>
+    <div class="tabs" id="tabs"></div>
+    <div class="pset" id="profileRow">
+      <label class="f grow" id="pNameWrap">Profile name<input id="pName"></label>
+      <label class="f" id="pColorWrap">Color<input id="pColor" type="color"></label>
+      <p class="hint kbnote" id="kbNote" style="display:none">Built-in: every key types what is printed on it, so the
+        Cardputer works as a keyboard (Ctrl/Alt/Opt work, Ctrl + Opt + ; , . / are the arrow keys, Fn + ` is Esc).
+        It cannot be edited or deleted and is not part of Import/Export.</p>
+      <div class="pact">
+        <span class="seg"><button id="pLeft" title="Move left">◀</button><button id="pRight" title="Move right">▶</button></span>
+        <button id="pDup" title="Copy this profile">Duplicate</button>
+        <button id="pExport" title="Download only this profile, e.g. to share it">Export</button>
+        <button id="pDel" class="danger" title="Delete this profile">Delete</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0" id="keysTitle">Keys</h2>
+      <div class="layer"><button id="lyN" class="on">Normal</button><button id="lyS">Shift layer</button></div>
+    </div>
+    <div class="kbwrap"><div class="kb" id="kb"></div></div>
+    <p class="hint" id="keysHint">Click a key, then set what it does below. Fn, Shift, Ctrl, Opt and Alt are reserved for the device.</p>
+  </section>
+
+  <section class="card editor" id="editor">
+    <div class="row" style="justify-content:space-between">
+      <h2 style="margin:0" id="edTitle">Key</h2>
+      <div class="row">
+        <button id="edTest" title="Sends it to the computer after 3 seconds">Test (3 s)</button>
+        <button id="edClear" class="danger">Clear key</button>
+      </div>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <label class="f">Name on screen<input id="edLabel" size="28" placeholder="e.g. Copy"></label>
+      <label class="row" style="gap:6px;margin-top:16px"><input type="checkbox" id="edRepeat"> Repeat while held</label>
+    </div>
+    <div class="steps" id="steps"></div>
+    <div class="row">
+      <button id="addCombo">+ Shortcut</button>
+      <button id="addText">+ Type text</button>
+      <button id="addMedia">+ Media key</button>
+      <button id="addDelay">+ Delay</button>
+    </div>
+  </section>
+
+</main>
+<div id="toast"></div>
+<div class="veil" id="codeVeil" hidden>
+  <form class="codebox" id="codeForm" autocomplete="off">
+    <h3>Enter the code from your MacroCard</h3>
+    <p class="hint">It is shown on the pad's screen while Wi-Fi is on (bottom line, or <b>Fn + W</b>).
+      It keeps others on your network from changing your pad.</p>
+    <input id="codeInput" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" placeholder="6 digits" required>
+    <p class="hint err" id="codeErr"></p>
+    <button class="primary" type="submit">Unlock</button>
+  </form>
+</div>
+
+<script>
+"use strict";
+// Cardputer v1.1 key layout: [normal id, shift id]; null = reserved key.
+const ROWS = [
+  [["`","~"],["1","!"],["2","@"],["3","#"],["4","$"],["5","%"],["6","^"],["7","&"],["8","*"],["9","("],["0",")"],["-","_"],["=","+"],["del","del"]],
+  [["tab","tab"],["q","Q"],["w","W"],["e","E"],["r","R"],["t","T"],["y","Y"],["u","U"],["i","I"],["o","O"],["p","P"],["[","{"],["]","}"],["\\","|"]],
+  [["fn",null],["shift",null],["a","A"],["s","S"],["d","D"],["f","F"],["g","G"],["h","H"],["j","J"],["k","K"],["l","L"],[";",":"],["'","\""],["enter","enter"]],
+  [["ctrl",null],["opt",null],["alt",null],["z","Z"],["x","X"],["c","C"],["v","V"],["b","B"],["n","N"],["m","M"],[",","<"],[".",">"],["/","?"],["space","space"]],
+];
+const SPECIAL = { del: "del", tab: "tab", enter: "enter", space: "space" };
+const KEY_ORDER = [];
+for (const layer of [0, 1]) for (const r of ROWS) for (const k of r) if (k[1] !== null) { const id = k[layer]; if (!KEY_ORDER.includes(id)) KEY_ORDER.push(id); }
+
+const MEDIA = [["volup","Volume +"],["voldown","Volume −"],["mute","Mute"],["play","Play / Pause"],["next","Next track"],["prev","Previous track"],["stop","Stop"],["bright_up","Brightness +"],["bright_down","Brightness −"],["calculator","Calculator"],["browser","Browser"],["mail","Mail"],["mycomputer","This PC"]];
+
+// KeyboardEvent.code -> firmware key name (physical position, layout independent)
+const CODE = { Enter:"enter", NumpadEnter:"kp_enter", Escape:"esc", Backspace:"backspace", Tab:"tab", Space:"space",
+  Minus:"minus", Equal:"equal", BracketLeft:"lbracket", BracketRight:"rbracket", Backslash:"backslash", Semicolon:"semicolon",
+  Quote:"quote", Backquote:"grave", Comma:"comma", Period:"period", Slash:"slash", IntlBackslash:"iso_backslash",
+  CapsLock:"capslock", PrintScreen:"printscreen", ScrollLock:"scrolllock", Pause:"pause", Insert:"insert", Home:"home",
+  PageUp:"pageup", Delete:"delete", End:"end", PageDown:"pagedown", ArrowRight:"right", ArrowLeft:"left", ArrowDown:"down",
+  ArrowUp:"up", NumLock:"numlock", NumpadDivide:"kp_slash", NumpadMultiply:"kp_star", NumpadSubtract:"kp_minus",
+  NumpadAdd:"kp_plus", NumpadDecimal:"kp_dot", ContextMenu:"menu" };
+function codeToName(code) {
+  if (CODE[code]) return CODE[code];
+  let m;
+  if ((m = code.match(/^Key([A-Z])$/))) return m[1].toLowerCase();
+  if ((m = code.match(/^Digit(\d)$/))) return m[1];
+  if ((m = code.match(/^Numpad(\d)$/))) return "kp" + m[1];
+  if ((m = code.match(/^F(\d{1,2})$/)) && +m[1] <= 24) return "f" + m[1];
+  return null;
+}
+const MOD_NAMES = ["ctrl","shift","alt","win","altgr"];
+const MOD_LABEL = { ctrl:"Ctrl", shift:"Shift", alt:"Alt", win:"Win", altgr:"AltGr" };
+const NICE = { enter:"Enter", esc:"Esc", backspace:"Backspace", tab:"Tab", space:"Space", delete:"Delete", insert:"Insert",
+  home:"Home", end:"End", pageup:"PgUp", pagedown:"PgDn", up:"↑", down:"↓", left:"←", right:"→", printscreen:"PrtSc",
+  capslock:"Caps", menu:"Menu", minus:"-", equal:"=", lbracket:"[", rbracket:"]", backslash:"\\", semicolon:";",
+  quote:"'", grave:"`", comma:",", period:".", slash:"/", kp_dot:"Num .", kp_enter:"Num Enter", kp_plus:"Num +",
+  kp_minus:"Num -", kp_star:"Num *", kp_slash:"Num /" };
+function niceKey(k) { if (NICE[k]) return NICE[k]; if (/^kp\d$/.test(k)) return "Num " + k[2]; if (/^f\d+$/.test(k)) return k.toUpperCase(); return k.length === 1 ? k.toUpperCase() : k; }
+function parseCombo(s) {
+  const parts = String(s || "").toLowerCase().split("+").map(x => x.trim()).filter(Boolean);
+  const alias = { control:"ctrl", lctrl:"ctrl", lshift:"shift", lalt:"alt", option:"alt", gui:"win", cmd:"win", meta:"win", super:"win", lgui:"win", ralt:"altgr" };
+  const mods = new Set(), keys = [];
+  for (let p of parts) { p = alias[p] || p; if (MOD_NAMES.includes(p)) mods.add(p); else keys.push(p); }
+  return { mods, keys };
+}
+function comboString(mods, keys) { return [...MOD_NAMES.filter(m => mods.has(m)), ...keys].join("+"); }
+function comboHtml(s) {
+  const { mods, keys } = parseCombo(s);
+  const parts = [...MOD_NAMES.filter(m => mods.has(m)).map(m => MOD_LABEL[m]), ...keys.map(niceKey)];
+  return parts.length ? parts.map(p => `<span class="chip">${esc(p)}</span>`).join("+") : "";
+}
+function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;" }[c])); }
+
+// ------------------------------------------------------------- state ---
+let cfg = null;          // normalized config
+let profIdx = 0, layer = 0, selKey = null, dirty = false;
+let configRev = "";  // settings revision this page loaded
+
+function normStep(s) {
+  if (typeof s === "string") return { keys: s };
+  if (s && typeof s === "object") {
+    if ("text" in s) return { text: String(s.text) };
+    if ("delay" in s) return { delay: Number(s.delay) || 0 };
+    if ("media" in s) return { media: String(s.media) };
+    if ("keys" in s) return { keys: String(s.keys) };
+  }
+  return { keys: "" };
+}
+function normMacro(v) {
+  if (v && typeof v === "object" && !Array.isArray(v) && "do" in v) {
+    const steps = Array.isArray(v.do) ? v.do : [v.do];
+    return { label: v.label || "", repeat: !!v.repeat, steps: steps.map(normStep) };
+  }
+  const steps = Array.isArray(v) ? v : [v];
+  return { label: typeof v === "string" ? v : "", repeat: false, steps: steps.map(normStep) };
+}
+function normalize(raw) {
+  return {
+    device_name: raw.device_name || "MacroCard",
+    layout: raw.layout || "us",
+    os: raw.os || "windows",
+    unicode: !!raw.unicode,
+    typing_delay_ms: raw.typing_delay_ms ?? 8,
+    profiles: (raw.profiles || []).map(p => {
+      const keys = {};
+      for (const [k, v] of Object.entries(p.keys || {})) keys[k] = normMacro(v);
+      return { name: p.name || "Profile", color: p.color || "#2299ff", keyboard: p.type === "keyboard", keys };
+    }),
+  };
+}
+function macroLabel(m) {
+  if (m.label) return m.label;
+  const s = m.steps[0];
+  if (!s) return "";
+  if ("keys" in s) return s.keys;
+  if ("text" in s) return "“" + s.text.slice(0, 12) + "”";
+  if ("media" in s) return (MEDIA.find(x => x[0] === s.media) || [0, s.media])[1];
+  return "macro";
+}
+function stepOut(s) {
+  if ("keys" in s) return { keys: s.keys };
+  if ("text" in s) return { text: s.text };
+  if ("delay" in s) return { delay: Math.max(0, Math.min(10000, Number(s.delay) || 0)) };
+  return { media: s.media };
+}
+function macroOut(m) {
+  const o = { label: m.label || macroLabel(m), do: m.steps.map(stepOut) };
+  if (m.repeat) o.repeat = true;
+  return o;
+}
+function profileOut(p) {
+  if (p.keyboard) return { name: "Keyboard", color: p.color, type: "keyboard", keys: {} };  // fixed
+  const keys = {};
+  const ids = Object.keys(p.keys).filter(k => p.keys[k].steps.length && p.keys[k].steps.some(validStep));
+  ids.sort((a, b) => KEY_ORDER.indexOf(a) - KEY_ORDER.indexOf(b));
+  for (const k of ids) { const m = p.keys[k]; keys[k] = macroOut({ ...m, steps: m.steps.filter(validStep) }); }
+  const o = { name: p.name, color: p.color };
+  if (p.keyboard) o.type = "keyboard";
+  o.keys = keys;
+  return o;
+}
+// pretty=false (default) keeps the upload small: the device has little RAM.
+function serialize(pretty = false) {
+  const out = {
+    device_name: cfg.device_name, layout: cfg.layout, os: cfg.os, unicode: cfg.unicode,
+    typing_delay_ms: Number(cfg.typing_delay_ms) || 0,
+    profiles: cfg.profiles.map(profileOut),
+  };
+  return pretty ? JSON.stringify(out, null, 2) : JSON.stringify(out);
+}
+
+// ------------------------------------------------- import / export ---
+function download(name, text) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: "application/json" }));
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+function fileSafe(s) { return String(s).trim().replace(/[^\w.-]+/g, "_").replace(/^_+|_+$/g, "") || "profile"; }
+function uniqueName(name) {
+  const names = new Set(cfg.profiles.map(p => p.name));
+  if (!names.has(name)) return name;
+  const base = name.replace(/ \(\d+\)$/, "");
+  for (let i = 2; ; i++) { const n = `${base} (${i})`; if (!names.has(n)) return n; }
+}
+function exportProfile() {
+  if (prof().keyboard) return;
+  const doc = { macrocard: "profile", version: 1, profile: profileOut(prof()) };
+  download(`macrocard-${fileSafe(prof().name)}.json`, JSON.stringify(doc, null, 2));
+  toast(`Exported "${prof().name}"`, "ok");
+}
+// The built-in Keyboard profile is never exported or imported.
+function exportAll() {
+  const list = cfg.profiles.filter(p => !p.keyboard);
+  if (!list.length) return toast("No profiles to export", "warn");
+  const doc = { macrocard: "profiles", version: 1, profiles: list.map(profileOut) };
+  download("macrocard-profiles.json", JSON.stringify(doc, null, 2));
+  toast(`Exported ${list.length} profile(s)`, "ok");
+}
+// Exactly one Keyboard profile, always present (second position by default).
+function ensureKeyboard() {
+  const first = cfg.profiles.findIndex(p => p.keyboard);
+  cfg.profiles = cfg.profiles.filter((p, i) => !p.keyboard || i === first);
+  if (first < 0) cfg.profiles.splice(Math.min(1, cfg.profiles.length), 0, { name: "Keyboard", color: "#8899aa", keyboard: true, keys: {} });
+}
+function duplicateProfile() {
+  if (prof().keyboard) return;
+  const copy = normalize({ profiles: [profileOut(prof())] }).profiles[0];
+  copy.name = uniqueName(prof().name + " copy");
+  cfg.profiles.splice(profIdx + 1, 0, copy);
+  profIdx++; selKey = null; setDirty(); renderAll();
+  toast(`Created "${copy.name}"`, "ok");
+}
+// Adds the profiles from a file to the current ones. Accepts an exported
+// profile, an export of several profiles, or a macropad.json.
+function importText(text, fileName) {
+  let raw;
+  try { raw = JSON.parse(text); } catch (e) { return toast(`${fileName}: not a MacroCard file (${e.message})`, "err"); }
+  let incoming = [];
+  if (raw && raw.profile && typeof raw.profile === "object") incoming = [raw.profile];
+  else if (raw && Array.isArray(raw.profiles)) incoming = raw.profiles;
+  else if (raw && raw.keys && typeof raw.keys === "object") incoming = [raw];
+  incoming = incoming.filter(p => p && p.type !== "keyboard");  // built in, never imported
+  if (!incoming.length) return toast(`${fileName}: no profiles to import`, "err");
+
+  const norm = normalize({ profiles: incoming }).profiles;
+  for (const p of norm) { p.name = uniqueName(p.name); cfg.profiles.push(p); }
+  profIdx = cfg.profiles.length - norm.length;
+  selKey = null; setDirty(); renderAll();
+  toast(`Imported ${norm.length} profile(s): ${norm.map(p => p.name).join(", ")}. Press Save to keep them.`, "ok");
+}
+function validStep(s) {
+  if ("keys" in s) return parseCombo(s.keys).keys.length > 0;
+  if ("text" in s) return s.text.length > 0;
+  return true;
+}
+function setDirty(v = true) {
+  dirty = v;
+  document.getElementById("dirty").textContent = v ? "Unsaved changes" : "";
+  document.body.classList.toggle("is-dirty", v);
+  document.getElementById("btnSave").disabled = !v;
+}
+window.addEventListener("beforeunload", e => { if (dirty) { e.preventDefault(); e.returnValue = ""; } });
+
+// ------------------------------------------------------------ render ---
+const $ = id => document.getElementById(id);
+function prof() { return cfg.profiles[profIdx]; }
+
+function renderAll() { renderSettings(); renderTabs(); renderKb(); renderEditor(); }
+const UNICODE_HINT = {
+  windows: "Windows: needs a one-time setting. Run <code>reg add \"HKCU\Control Panel\Input Method\" /v EnableHexNumpad /t REG_SZ /d 1</code> and sign out and back in. Works in most programs.",
+  mac: "macOS: add <b>Unicode Hex Input</b> under System Settings → Keyboard → Input Sources and switch to it while using the pad (it uses English US keys, so pick English (US) above).",
+  linux: "Linux: works without setup in most programs (GTK/Qt apps with IBus, e.g. GNOME). Uses Ctrl+Shift+U.",
+};
+let LAYOUTS = [];
+function renderSettings() {
+  $("devName").value = cfg.device_name; $("delayMs").value = cfg.typing_delay_ms;
+  $("os").value = cfg.os;
+  const sel = $("layout"); sel.innerHTML = "";
+  const list = LAYOUTS.length ? LAYOUTS : [{ id: cfg.layout, name: cfg.layout, mac: false }];
+  for (const l of list) sel.add(new Option(l.name + (cfg.os === "mac" && l.mac ? " (Mac)" : ""), l.id, false, l.id === cfg.layout));
+  if (!list.some(l => l.id === cfg.layout)) sel.add(new Option(cfg.layout, cfg.layout, true, true));
+  $("unicode").checked = cfg.unicode;
+  $("unicodeHint").innerHTML = cfg.unicode ? UNICODE_HINT[cfg.os] : "";
+  renderSummary();
+}
+// One line shown while the settings are collapsed.
+function renderSummary() {
+  const os = { windows: "Windows", mac: "macOS", linux: "Linux" }[cfg.os] || cfg.os;
+  const lay = (LAYOUTS.find(l => l.id === cfg.layout) || { name: cfg.layout }).name;
+  const parts = [cfg.device_name, os, lay + (cfg.unicode ? " + Unicode" : ""), (Number(cfg.typing_delay_ms) || 0) + " ms"];
+  $("setSummary").innerHTML = parts.map(esc).join("<i>·</i>");
+}
+function inkFor(hex) {
+  const m = /^#?([0-9a-f]{6})$/i.exec(hex || "");
+  if (!m) return "#fff";
+  const v = parseInt(m[1], 16), r = v >> 16, g = (v >> 8) & 255, b = v & 255;
+  return (r * 299 + g * 587 + b * 114) / 1000 > 150 ? "#18191b" : "#fff";
+}
+function renderTabs() {
+  if (delArmed) disarmDelete();  // a pending delete never carries over to another profile
+  const t = $("tabs"); t.innerHTML = "";
+  cfg.profiles.forEach((p, i) => {
+    const b = document.createElement("button");
+    b.className = "tab" + (i === profIdx ? " active" : "");
+    b.style.setProperty("--tc", p.color); b.style.setProperty("--tink", inkFor(p.color));
+    b.innerHTML = `<span class="dot" style="background:${esc(p.color)}"></span>${esc(p.name)}`;
+    b.onclick = () => { profIdx = i; selKey = null; renderAll(); };
+    t.appendChild(b);
+  });
+  const add = document.createElement("button");
+  add.textContent = "+ Profile";
+  add.onclick = () => { cfg.profiles.push({ name: uniqueName("New profile"), color: "#22ccaa", keys: {} }); profIdx = cfg.profiles.length - 1; selKey = null; setDirty(); renderAll(); $("pName").select(); };
+  t.appendChild(add);
+  const p = prof();
+  $("profileRow").style.display = p ? "" : "none";
+  if (p) {
+    $("pName").value = p.name; $("pColor").value = /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : "#2299ff";
+    for (const id of ["pDup", "pExport", "pDel", "pNameWrap", "pColorWrap"]) $(id).style.display = p.keyboard ? "none" : "";
+    $("keysHint").textContent = p.keyboard ? "Keyboard profile: shows what each key types. Shift layer shows the shifted characters."
+      : "Click a key, then set what it does below. Fn, Shift, Ctrl, Opt and Alt are reserved for the device.";
+    $("kbNote").style.display = p.keyboard ? "" : "none";
+    $("profileRow").style.setProperty("--pc", p.color);
+    $("keysTitle").innerHTML = `Keys<span class="dot" style="background:${esc(p.color)}"></span><b>${esc(p.name)}</b>`;
+  }
+}
+// What is printed on the Cardputer case above each key.
+const ARROWS = { ";": "▲", ",": "◀", ".": "▼", "/": "▶" };
+const CHIPS = { fn: ["c-orange", "fn"], shift: ["c-blue", "Aa"], opt: ["c-green", "opt"],
+  ctrl: ["tag", "ctrl"], alt: ["tag", "alt"], tab: ["tag", "tab"], del: ["tag", "del"], enter: ["tag", "ok"], space: ["tag", "space"] };
+function capHtml(k) {
+  const [n, s] = k;
+  if (CHIPS[n]) return { cls: CHIPS[n][0], html: esc(CHIPS[n][1]) };
+  const main = layer === 1 && s ? s : n;
+  if (/^[a-z]$/.test(n)) return { cls: "", html: esc(n.toUpperCase()) };
+  let html = esc(main) + (layer === 0 && s ? `<sup>${esc(s)}</sup>` : "");
+  if (ARROWS[n]) html = `<span class="arrow">${ARROWS[n]}</span>` + html;
+  return { cls: "", html };
+}
+function renderKb() {
+  const kb = $("kb"); kb.innerHTML = "";
+  const p = prof();
+  $("lyN").classList.toggle("on", layer === 0); $("lyS").classList.toggle("on", layer === 1);
+  for (const row of ROWS) {
+    const caps = document.createElement("div"); caps.className = "kbcaps";
+    const keys = document.createElement("div"); keys.className = "kbkeys";
+    for (const k of row) {
+      const id = k[layer];
+      const reserved = k[1] === null;
+      const shiftDup = layer === 1 && SPECIAL[k[0]];  // same key on both layers
+      const cap = capHtml(k);
+      const c = document.createElement("span");
+      c.className = "cap " + cap.cls;
+      c.innerHTML = /^c-/.test(cap.cls) ? `<span>${cap.html}</span>` : cap.html;
+      caps.appendChild(c);
+
+      const el = document.createElement("div");
+      el.className = "key";
+      el.title = reserved ? "Reserved for the device" : id;
+      el.innerHTML = `<span class="pill"><span class="lbl"></span></span>`;
+      if (reserved || shiftDup) { el.classList.add("off"); if (shiftDup) el.title = "Set it on the normal layer"; }
+      else if (p && p.keyboard) {
+        // Fixed profile: show what each key types, nothing to click.
+        el.classList.add("typed");
+        el.querySelector(".lbl").textContent = id;
+      } else {
+        const m = p && p.keys[id];
+        if (m && m.steps.length) { el.classList.add("set"); el.querySelector(".lbl").textContent = macroLabel(m); }
+        if (id === selKey) el.classList.add("sel");
+        el.onclick = () => { selKey = id; renderKb(); renderEditor(); $("editor").scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+      }
+      if (p) el.style.setProperty("--pc", p.color);
+      keys.appendChild(el);
+    }
+    kb.append(caps, keys);
+  }
+}
+function currentMacro(create) {
+  const p = prof();
+  if (!p || selKey === null) return null;
+  if (!p.keys[selKey] && create) p.keys[selKey] = { label: "", repeat: false, steps: [] };
+  return p.keys[selKey] || null;
+}
+function renderEditor() {
+  const ed = $("editor");
+  if (selKey === null || !prof() || prof().keyboard) { ed.classList.remove("open"); return; }
+  ed.classList.add("open");
+  const m = currentMacro(false) || { label: "", repeat: false, steps: [] };
+  $("edTitle").textContent = `${layer === 1 ? "Shift layer" : "Key"}: ${selKey}  ·  ${prof().name}`;
+  $("edLabel").value = m.label;
+  $("edLabel").placeholder = macroLabel({ ...m, label: "" }) || "e.g. Copy";
+  $("edRepeat").checked = m.repeat;
+  const box = $("steps"); box.innerHTML = "";
+  if (!m.steps.length) box.innerHTML = `<div class="hint">No steps yet. Add one below.</div>`;
+  m.steps.forEach((s, i) => box.appendChild(stepEl(m, s, i)));
+}
+function stepEl(m, s, i) {
+  const el = document.createElement("div");
+  el.className = "step";
+  const type = "keys" in s ? "keys" : "text" in s ? "text" : "delay" in s ? "delay" : "media";
+  const sel = document.createElement("select");
+  for (const [v, t] of [["keys","Shortcut"],["text","Type text"],["media","Media key"],["delay","Delay"]]) sel.add(new Option(t, v, false, v === type));
+  sel.onchange = () => { m.steps[i] = { keys: { keys: "" }, text: { text: "" }, media: { media: "volup" }, delay: { delay: 300 } }[sel.value]; changed(); renderEditor(); };
+  const body = document.createElement("div");
+  if (type === "keys") body.appendChild(recorder(m, s));
+  else if (type === "text") {
+    const ta = document.createElement("textarea");
+    ta.value = s.text; ta.placeholder = "Text to type. A new line presses Enter.";
+    ta.oninput = () => { s.text = ta.value; changed(false); };
+    body.appendChild(ta);
+  } else if (type === "media") {
+    const ms = document.createElement("select");
+    for (const [v, t] of MEDIA) ms.add(new Option(t, v, false, v === s.media));
+    ms.onchange = () => { s.media = ms.value; changed(); };
+    body.appendChild(ms);
+  } else {
+    const n = document.createElement("input");
+    n.type = "number"; n.min = 0; n.max = 10000; n.step = 50; n.value = s.delay; n.style.width = "110px";
+    n.oninput = () => { s.delay = Number(n.value) || 0; changed(false); };
+    body.appendChild(n); body.appendChild(document.createTextNode(" ms"));
+  }
+  const ctl = document.createElement("div"); ctl.className = "ctl";
+  const mk = (t, title, fn, dis) => { const b = document.createElement("button"); b.className = "small"; b.textContent = t; b.title = title; b.disabled = dis; b.onclick = fn; return b; };
+  ctl.append(
+    mk("↑", "Up", () => { [m.steps[i - 1], m.steps[i]] = [m.steps[i], m.steps[i - 1]]; changed(); renderEditor(); }, i === 0),
+    mk("↓", "Down", () => { [m.steps[i + 1], m.steps[i]] = [m.steps[i], m.steps[i + 1]]; changed(); renderEditor(); }, i === m.steps.length - 1),
+    mk("✕", "Delete", () => { m.steps.splice(i, 1); changed(); renderEditor(); }, false));
+  el.append(sel, body, ctl);
+  return el;
+}
+
+// Recorder: click, then press the shortcut on the PC keyboard.
+let listening = null;
+function recorder(m, s) {
+  const wrap = document.createElement("div"); wrap.className = "rec";
+  const box = document.createElement("div"); box.className = "box"; box.tabIndex = 0;
+  const show = () => {
+    const h = comboHtml(s.keys);
+    box.classList.toggle("has", !!h);
+    box.innerHTML = h || "Click, then press the shortcut";
+    mods.querySelectorAll("button").forEach(b => b.classList.toggle("on", parseCombo(s.keys).mods.has(b.dataset.m)));
+    text.value = s.keys;
+  };
+  box.onclick = () => startListen(box, s, show);
+  const mods = document.createElement("span"); mods.className = "mods";
+  for (const md of ["ctrl","shift","alt","win"]) {
+    const b = document.createElement("button"); b.textContent = MOD_LABEL[md]; b.dataset.m = md; b.title = "Add/remove modifier";
+    b.onclick = () => { const c = parseCombo(s.keys); c.mods.has(md) ? c.mods.delete(md) : c.mods.add(md); s.keys = comboString(c.mods, c.keys); changed(); show(); };
+    mods.appendChild(b);
+  }
+  const text = document.createElement("input"); text.size = 18; text.title = "You can also type it, e.g. win+d, ctrl+shift+esc, f13";
+  text.placeholder = "e.g. win+d";
+  text.oninput = () => { s.keys = text.value.trim().toLowerCase(); changed(false); box.innerHTML = comboHtml(s.keys) || "Click, then press the shortcut"; };
+  text.onchange = () => { renderKb(); show(); };
+  wrap.append(box, mods, text);
+  setTimeout(show);
+  return wrap;
+}
+function startListen(box, s, show) {
+  stopListen();
+  listening = { box, s, show };
+  box.classList.add("listening");
+  box.textContent = "Listening… press the shortcut (click outside to cancel)";
+  box.focus();
+}
+function stopListen() {
+  if (!listening) return;
+  listening.box.classList.remove("listening");
+  listening.show();
+  listening = null;
+}
+document.addEventListener("keydown", e => {
+  if (!listening) return;
+  e.preventDefault(); e.stopPropagation();
+  if (["Control","Shift","Alt","Meta","AltGraph","OS"].includes(e.key)) {
+    const mods = [];
+    if (e.ctrlKey && !e.getModifierState("AltGraph")) mods.push("Ctrl");
+    if (e.shiftKey) mods.push("Shift");
+    if (e.getModifierState("AltGraph")) mods.push("AltGr"); else if (e.altKey) mods.push("Alt");
+    if (e.metaKey) mods.push("Win");
+    listening.box.innerHTML = mods.map(x => `<span class="chip">${x}</span>`).join("+") + " + …";
+    return;
+  }
+  const name = codeToName(e.code);
+  if (!name) { toast("Key not recognized: " + e.code, "warn"); return; }
+  const mods = new Set();
+  const altgr = e.getModifierState("AltGraph");
+  if (e.ctrlKey && !altgr) mods.add("ctrl");
+  if (e.shiftKey) mods.add("shift");
+  if (altgr) mods.add("altgr"); else if (e.altKey) mods.add("alt");
+  if (e.metaKey) mods.add("win");
+  listening.s.keys = comboString(mods, [name]);
+  changed();
+  renderKb();
+  stopListen();
+}, true);
+document.addEventListener("mousedown", e => { if (listening && !listening.box.contains(e.target)) stopListen(); });
+
+function changed(rerenderKb = true) { setDirty(); if (rerenderKb) renderKb(); }
+
+// ------------------------------------------------------------ wiring ---
+$("devName").oninput = e => { cfg.device_name = e.target.value; setDirty(); renderSummary(); };
+$("setToggle").onclick = () => {
+  const open = $("setBody").hidden;
+  $("setBody").hidden = !open; $("setToggle").setAttribute("aria-expanded", String(open));
+  try { localStorage.setItem("mc.settingsOpen", open ? "1" : ""); } catch (e) {}
+};
+try { if (localStorage.getItem("mc.settingsOpen")) { $("setBody").hidden = false; $("setToggle").setAttribute("aria-expanded", "true"); } } catch (e) {}
+$("layout").onchange = e => { cfg.layout = e.target.value; setDirty(); renderSummary(); };
+$("os").onchange = e => { cfg.os = e.target.value; setDirty(); renderSettings(); };
+$("unicode").onchange = e => { cfg.unicode = e.target.checked; setDirty(); renderSettings(); };
+$("delayMs").oninput = e => { cfg.typing_delay_ms = Number(e.target.value) || 0; setDirty(); renderSummary(); };
+$("pName").oninput = e => { prof().name = e.target.value; setDirty(); renderTabs(); $("pName").focus(); };
+$("pColor").oninput = e => { prof().color = e.target.value; setDirty(); renderTabs(); renderKb(); };
+$("pName").onchange = () => renderTabs();
+$("pDup").onclick = duplicateProfile;
+$("pExport").onclick = exportProfile;
+$("btnExport").onclick = exportAll;
+$("btnImport").onclick = () => $("importFile").click();
+$("importFile").onchange = async e => {
+  for (const f of e.target.files) importText(await f.text(), f.name);
+  e.target.value = "";
+};
+// Drag & drop a .json file anywhere on the page to import it.
+document.addEventListener("dragover", e => e.preventDefault());
+document.addEventListener("drop", async e => {
+  e.preventDefault();
+  if (!cfg) return;
+  for (const f of e.dataTransfer.files) importText(await f.text(), f.name);
+});
+// Two-click delete inside the page (browser confirm() dialogs can be
+// suppressed, e.g. in embedded browsers, which silently cancelled deletes).
+let delArmed = 0;
+function disarmDelete() {
+  clearTimeout(delArmed); delArmed = 0;
+  $("pDel").textContent = "Delete"; $("pDel").classList.remove("armed");
+}
+$("pDel").onclick = () => {
+  if (prof().keyboard) return toast("The Keyboard profile is built in and cannot be deleted", "warn");
+  if (cfg.profiles.length <= 1) return toast("At least one profile is required", "warn");
+  if (!delArmed) {
+    $("pDel").textContent = `Delete “${prof().name}”?`; $("pDel").classList.add("armed");
+    delArmed = setTimeout(disarmDelete, 3000);
+    return;
+  }
+  disarmDelete();
+  const name = prof().name;
+  cfg.profiles.splice(profIdx, 1); profIdx = Math.max(0, profIdx - 1); selKey = null; setDirty(); renderAll();
+  toast(`Deleted “${name}”. Press Save to keep the change.`, "ok");
+};
+$("pLeft").onclick = () => { if (profIdx > 0) { const p = cfg.profiles; [p[profIdx - 1], p[profIdx]] = [p[profIdx], p[profIdx - 1]]; profIdx--; setDirty(); renderTabs(); } };
+$("pRight").onclick = () => { const p = cfg.profiles; if (profIdx < p.length - 1) { [p[profIdx + 1], p[profIdx]] = [p[profIdx], p[profIdx + 1]]; profIdx++; setDirty(); renderTabs(); } };
+$("lyN").onclick = () => { layer = 0; selKey = null; renderKb(); renderEditor(); };
+$("lyS").onclick = () => { layer = 1; selKey = null; renderKb(); renderEditor(); };
+$("edLabel").oninput = e => { currentMacro(true).label = e.target.value; setDirty(); renderKb(); };
+$("edRepeat").onchange = e => { currentMacro(true).repeat = e.target.checked; setDirty(); };
+const addStep = s => () => { currentMacro(true).steps.push(s()); changed(); renderEditor(); };
+$("addCombo").onclick = () => {
+  addStep(() => ({ keys: "" }))();
+  const boxes = document.querySelectorAll("#steps .rec .box");
+  const last = boxes[boxes.length - 1];
+  if (last) last.click();
+};
+$("addText").onclick = addStep(() => ({ text: "" }));
+$("addMedia").onclick = addStep(() => ({ media: "volup" }));
+$("addDelay").onclick = addStep(() => ({ delay: 300 }));
+$("edClear").onclick = () => { delete prof().keys[selKey]; changed(); renderEditor(); };
+$("edTest").onclick = async () => {
+  const m = currentMacro(false);
+  if (!m || !m.steps.some(validStep)) return toast("Add at least one step first", "warn");
+  const doc = { profiles: [{ name: "test", keys: { x: macroOut({ ...m, steps: m.steps.filter(validStep) }) } }] };
+  for (let i = 3; i > 0; i--) { toast(`Sending in ${i} s — switch to the target window`, "warn"); await new Promise(r => setTimeout(r, 1000)); }
+  try {
+    const r = await api("/api/run", { method: "POST", body: JSON.stringify(doc) });
+    const j = await r.json();
+    toast(j.ok ? "Sent" : "Error: " + j.error, j.ok ? "ok" : "err");
+  } catch (e) { toast("Cannot reach the device", "err"); }
+};
+$("btnSave").onclick = save;
+document.addEventListener("keydown", e => { if (!listening && e.ctrlKey && e.key.toLowerCase() === "s") { e.preventDefault(); if (dirty) save(); } });
+
+// Requests that read or change the macros carry the access code.
+function savedCode() { try { return localStorage.getItem("mc.code") || ""; } catch (e) { return ""; } }
+function askCode(message) {
+  return new Promise(resolve => {
+    $("codeErr").textContent = message || "";
+    $("codeVeil").hidden = false; $("codeInput").value = ""; $("codeInput").focus();
+    $("codeForm").onsubmit = async e => {
+      e.preventDefault();
+      const code = $("codeInput").value.trim();
+      const r = await fetch("/api/auth", { headers: { "X-Code": code } }).catch(() => null);
+      if (r && r.ok) {
+        try { localStorage.setItem("mc.code", code); } catch (err) {}
+        $("codeVeil").hidden = true; resolve(code);
+      } else if (r && r.status === 429) {
+        $("codeErr").textContent = "Too many wrong codes. Wait a minute and try again.";
+      } else {
+        $("codeErr").textContent = r ? "Wrong code. Check the pad's screen." : "Cannot reach the pad.";
+      }
+    };
+  });
+}
+async function api(url, opts = {}) {
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const r = await fetch(url, { ...opts, headers: { ...(opts.headers || {}), "X-Code": savedCode() } });
+    if (r.status !== 401) return r;
+    await askCode(attempt ? "Wrong code. Check the pad's screen." : "");
+  }
+  throw new Error("code");
+}
+
+async function save() {
+  if (!cfg.profiles.length) return toast("At least one profile is required", "warn");
+  const body = serialize();
+  $("btnSave").disabled = true;
+  try {
+    const r = await api("/api/config?rev=" + configRev, { method: "POST", body });
+    const j = await r.json();
+    if (j.ok) { setDirty(false); try { configRev = (await fetch("/api/info").then(r => r.json())).rev; } catch (e) {} toast(j.warnings ? "Saved, with warnings:\n" + j.warnings : "Saved — active on the device now", j.warnings ? "warn" : "ok"); }
+    else { toast("Save failed: " + j.error, "err"); setDirty(true); }
+  } catch (e) { toast("Cannot reach the device", "err"); setDirty(true); }
+}
+
+let toastTimer = 0;
+function toast(msg, kind = "ok") {
+  const t = $("toast"); t.textContent = msg; t.className = kind; t.style.display = "block";
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.style.display = "none"), 4000);
+}
+
+async function load() {
+  try {
+    const i = await fetch("/api/info").then(r => r.json());
+    const c = await api("/api/config").then(r => r.json());
+    configRev = i.rev ?? "";
+    try { LAYOUTS = await fetch("/api/layouts").then(r => r.json()); } catch (e) { LAYOUTS = []; }
+    cfg = normalize(c);
+    ensureKeyboard();
+    profIdx = Math.min(i.profile || 0, cfg.profiles.length - 1);
+    $("status").textContent = [i.name, i.ip || "macrocard.local", i.link, i.sd ? "saved to SD card" : "saved to internal flash"].join("  ·  ");
+    renderAll();
+  } catch (e) {
+    $("status").textContent = "Cannot reach the pad. Turn on Wi-Fi with Fn+W, then reload this page.";
+  }
+}
+// Firmware update: upload a .bin; the pad installs it and restarts.
+$("btnFw").onclick = () => $("fwFile").click();
+$("fwFile").onchange = async e => {
+  const file = e.target.files[0]; e.target.value = "";
+  if (!file) return;
+  if (!/\.bin$/i.test(file.name)) return toast("Pick a MacroCard firmware .bin file", "warn");
+  if (dirty) return toast("Save or reload first: there are unsaved changes", "warn");
+  if (!savedCode() || !(await fetch("/api/auth", { headers: { "X-Code": savedCode() } })).ok) await askCode();
+  const form = new FormData(); form.append("firmware", file, file.name);
+  const xhr = new XMLHttpRequest();
+  xhr.open("POST", "/api/update");
+  xhr.setRequestHeader("X-Code", savedCode());
+  xhr.upload.onprogress = ev => { if (ev.lengthComputable) toast(`Installing firmware… ${Math.round(ev.loaded / ev.total * 100)}%`, "warn"); };
+  xhr.onload = () => {
+    let j = {}; try { j = JSON.parse(xhr.responseText); } catch (err) {}
+    if (xhr.status === 200 && j.ok) {
+      toast(`Installed v${j.version}. The pad restarts; this page reloads in 20 s.`, "ok");
+      setTimeout(() => location.reload(), 20000);
+    } else toast("Update failed: " + (j.error || xhr.status), "err");
+  };
+  xhr.onerror = () => toast("Upload failed: cannot reach the pad", "err");
+  xhr.send(form);
+};
+
+load();
+</script>
+</body>
+</html>

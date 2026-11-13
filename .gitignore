@@ -1,0 +1,10 @@
+# PlatformIO build output
+.pio/
+.vscode/
+
+# Generated at build time by tools/embed_config.py
+src/default_config.generated.h
+src/web_page.generated.h
+
+# Release binaries go to GitHub Releases / M5Burner, not into git
+release/

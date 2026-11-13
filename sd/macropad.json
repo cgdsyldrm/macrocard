@@ -1,0 +1,106 @@
+{
+  "device_name": "MacroCard",
+  "layout": "us",
+  "os": "windows",
+  "unicode": false,
+  "typing_delay_ms": 8,
+  "profiles": [
+    {
+      "name": "Windows",
+      "color": "#2299ff",
+      "keys": {
+        "1": { "label": "Copy", "do": "ctrl+c" },
+        "2": { "label": "Paste", "do": "ctrl+v" },
+        "3": { "label": "Undo", "do": "ctrl+z" },
+        "4": { "label": "Redo", "do": "ctrl+y" },
+        "q": { "label": "Desktop", "do": "win+d" },
+        "w": { "label": "Explorer", "do": "win+e" },
+        "e": { "label": "Snip", "do": "win+shift+s" },
+        "r": { "label": "Task Mgr", "do": "ctrl+shift+esc" },
+        "t": { "label": "Clipboard", "do": "win+v" },
+        "l": { "label": "Lock", "do": "win+l" },
+        "a": { "label": "Type text", "do": { "text": "Hello from MacroCard! @ # { } [ ]\n" } },
+        "s": {
+          "label": "Notepad",
+          "do": [
+            "win+r",
+            { "delay": 500 },
+            { "text": "notepad\n" },
+            { "delay": 1000 },
+            { "text": "Hello from MacroCard!" }
+          ]
+        }
+      }
+    },
+    {
+      "name": "Keyboard",
+      "color": "#8899aa",
+      "type": "keyboard",
+      "keys": {}
+    },
+    {
+      "name": "Media",
+      "color": "#ff5577",
+      "keys": {
+        "1": { "label": "Vol -", "do": { "media": "voldown" }, "repeat": true },
+        "2": { "label": "Vol +", "do": { "media": "volup" }, "repeat": true },
+        "3": { "label": "Mute", "do": { "media": "mute" } },
+        "q": { "label": "Prev", "do": { "media": "prev" } },
+        "w": { "label": "Play/Pause", "do": { "media": "play" } },
+        "e": { "label": "Next", "do": { "media": "next" } },
+        "space": { "label": "Play/Pause", "do": { "media": "play" } }
+      }
+    },
+    {
+      "name": "VS Code",
+      "color": "#33cc88",
+      "keys": {
+        "1": { "label": "Commands", "do": "ctrl+shift+p" },
+        "2": { "label": "Open file", "do": "ctrl+p" },
+        "3": { "label": "Search", "do": "ctrl+shift+f" },
+        "4": { "label": "Sidebar", "do": "ctrl+b" },
+        "q": { "label": "Go to def", "do": "f12" },
+        "w": { "label": "Rename", "do": "f2" },
+        "e": { "label": "Format", "do": "shift+alt+f" },
+        "r": { "label": "Debug", "do": "f5" },
+        "s": { "label": "Save all", "do": ["ctrl+k", "s"] }
+      }
+    },
+    {
+      "name": "Blender",
+      "color": "#ff9922",
+      "keys": {
+        "1": { "label": "Front", "do": "kp1" },
+        "2": { "label": "Back", "do": "ctrl+kp1" },
+        "3": { "label": "Right", "do": "kp3" },
+        "4": { "label": "Left", "do": "ctrl+kp3" },
+        "5": { "label": "Top", "do": "kp7" },
+        "6": { "label": "Bottom", "do": "ctrl+kp7" },
+        "7": { "label": "Persp/Ortho", "do": "kp5" },
+        "8": { "label": "Camera", "do": "kp0" },
+        "9": { "label": "Frame sel", "do": "kp_dot" },
+        "tab": { "label": "Edit mode", "do": "tab" },
+        "a": { "label": "Add menu", "do": "shift+a" },
+        "s": { "label": "Save", "do": "ctrl+s" }
+      }
+    },
+    {
+      "name": "F13-F24",
+      "color": "#aa66ff",
+      "keys": {
+        "1": "f13",
+        "2": "f14",
+        "3": "f15",
+        "4": "f16",
+        "5": "f17",
+        "6": "f18",
+        "7": "f19",
+        "8": "f20",
+        "9": "f21",
+        "0": "f22",
+        "-": "f23",
+        "=": "f24"
+      }
+    }
+  ]
+}
