@@ -40,6 +40,7 @@ struct Config {
     typing::Os os          = typing::Os::Windows;
     bool unicode           = false;  // OS Unicode input for characters not on the layout
     uint16_t typingDelayMs = 8;
+    uint16_t screenOffS    = 60;  // turn the screen off after this idle time; 0 = never
     std::vector<Profile> profiles;
 
     typing::Settings typingSettings() const

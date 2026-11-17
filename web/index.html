@@ -254,8 +254,12 @@ button.link:hover { background: transparent; color: var(--ink); }
         <div class="grp">
           <h3>Device</h3>
           <label class="f">Name shown over USB and Bluetooth<input id="devName"></label>
-          <label class="f">Delay between key presses (ms)<input id="delayMs" type="number" min="0" max="200"></label>
-          <p class="hint">A new name applies after the pad restarts.</p>
+          <div class="pair">
+            <label class="f">Key press delay (ms)<input id="delayMs" type="number" min="0" max="200"></label>
+            <label class="f">Screen off when idle
+              <select id="screenOff"><option value="30">after 30 seconds</option><option value="60">after 1 minute</option><option value="120">after 2 minutes</option><option value="300">after 5 minutes</option><option value="600">after 10 minutes</option><option value="0">never</option></select></label>
+          </div>
+          <p class="hint">A new name applies after the pad restarts. The screen dims 10 seconds before it turns off; any key turns it back on (that key press does nothing else).</p>
         </div>
         <div class="grp">
           <h3>Typing text</h3>
@@ -419,6 +423,7 @@ function normalize(raw) {
     os: raw.os || "windows",
     unicode: !!raw.unicode,
     typing_delay_ms: raw.typing_delay_ms ?? 8,
+    screen_off_s: raw.screen_off_s ?? 60,
     profiles: (raw.profiles || []).map(p => {
       const keys = {};
       for (const [k, v] of Object.entries(p.keys || {})) keys[k] = normMacro(v);
@@ -462,6 +467,7 @@ function serialize(pretty = false) {
   const out = {
     device_name: cfg.device_name, layout: cfg.layout, os: cfg.os, unicode: cfg.unicode,
     typing_delay_ms: Number(cfg.typing_delay_ms) || 0,
+    screen_off_s: Number(cfg.screen_off_s) || 0,
     profiles: cfg.profiles.map(profileOut),
   };
   return pretty ? JSON.stringify(out, null, 2) : JSON.stringify(out);
@@ -554,6 +560,9 @@ const UNICODE_HINT = {
 let LAYOUTS = [];
 function renderSettings() {
   $("devName").value = cfg.device_name; $("delayMs").value = cfg.typing_delay_ms;
+  const so = $("screenOff"), sv = String(Number(cfg.screen_off_s) || 0);
+  if (![...so.options].some(o => o.value === sv)) so.add(new Option("after " + sv + " seconds", sv));
+  so.value = sv;
   $("os").value = cfg.os;
   const sel = $("layout"); sel.innerHTML = "";
   const list = LAYOUTS.length ? LAYOUTS : [{ id: cfg.layout, name: cfg.layout, mac: false }];
@@ -567,7 +576,8 @@ function renderSettings() {
 function renderSummary() {
   const os = { windows: "Windows", mac: "macOS", linux: "Linux" }[cfg.os] || cfg.os;
   const lay = (LAYOUTS.find(l => l.id === cfg.layout) || { name: cfg.layout }).name;
-  const parts = [cfg.device_name, os, lay + (cfg.unicode ? " + Unicode" : ""), (Number(cfg.typing_delay_ms) || 0) + " ms"];
+  const parts = [cfg.device_name, os, lay + (cfg.unicode ? " + Unicode" : ""), (Number(cfg.typing_delay_ms) || 0) + " ms",
+    "screen " + ((s) => !s ? "always on" : s < 60 ? s + " s" : s / 60 + " min")(Number(cfg.screen_off_s) || 0)];
   $("setSummary").innerHTML = parts.map(esc).join("<i>·</i>");
 }
 function inkFor(hex) {
@@ -789,6 +799,7 @@ $("layout").onchange = e => { cfg.layout = e.target.value; setDirty(); renderSum
 $("os").onchange = e => { cfg.os = e.target.value; setDirty(); renderSettings(); };
 $("unicode").onchange = e => { cfg.unicode = e.target.checked; setDirty(); renderSettings(); };
 $("delayMs").oninput = e => { cfg.typing_delay_ms = Number(e.target.value) || 0; setDirty(); renderSummary(); };
+$("screenOff").onchange = e => { cfg.screen_off_s = Number(e.target.value) || 0; setDirty(); renderSummary(); };
 $("pName").oninput = e => { prof().name = e.target.value; setDirty(); renderTabs(); $("pName").focus(); };
 $("pColor").oninput = e => { prof().color = e.target.value; setDirty(); renderTabs(); renderKb(); };
 $("pName").onchange = () => renderTabs();

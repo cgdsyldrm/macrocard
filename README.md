@@ -200,6 +200,7 @@ The web page edits this file for you. Format, for reference:
   "os": "windows",
   "unicode": false,
   "typing_delay_ms": 8,
+  "screen_off_s": 60,
   "profiles": [
     {
       "name": "Example",
@@ -220,6 +221,7 @@ The web page edits this file for you. Format, for reference:
 - `device_name`: name shown over USB and Bluetooth (applies after restart).
 - `layout`, `os`, `unicode`: see *Typing text* above (layout ids: `us`, `us-intl`, `gb`, `tr`, `tr-f`, `de`, `fr`, ... as listed by `/api/layouts`).
 - `typing_delay_ms`: delay between key presses (Bluetooth uses at least 12 ms).
+- `screen_off_s`: turn the screen off after this many idle seconds (default 60, `0` = never). It dims 10 s before; the key that wakes it does nothing else.
 - `type`: `"keyboard"` makes it a keyboard profile (see above).
 - `keys`: the Cardputer key: `"1"`, `"q"`, `"-"`, `"["`, or for the Shift
   layer `"Q"`, `"!"`, `"{"`. Special keys: `"tab"`, `"enter"`, `"del"`, `"space"`.

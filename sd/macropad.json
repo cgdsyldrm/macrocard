@@ -4,6 +4,7 @@
   "os": "windows",
   "unicode": false,
   "typing_delay_ms": 8,
+  "screen_off_s": 60,
   "profiles": [
     {
       "name": "Windows",

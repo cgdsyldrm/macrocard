@@ -122,6 +122,10 @@ bool parseConfig(const String& json, Config& cfg, String& error, String& warning
     if (doc["typing_delay_ms"].is<uint16_t>()) {
         parsed.typingDelayMs = min<uint16_t>(doc["typing_delay_ms"].as<uint16_t>(), 200);
     }
+    if (doc["screen_off_s"].is<uint16_t>()) {
+        uint16_t s = doc["screen_off_s"].as<uint16_t>();
+        parsed.screenOffS = s == 0 ? 0 : constrain(s, (uint16_t)15, (uint16_t)3600);
+    }
 
     for (JsonObjectConst p : doc["profiles"].as<JsonArrayConst>()) {
         Profile profile;

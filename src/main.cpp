@@ -50,6 +50,11 @@ constexpr uint32_t TYPE_REPEAT_MS     = 45;  // key repeat in keyboard profiles
 constexpr uint32_t FLASH_MS           = 350;
 constexpr uint32_t SPLASH_MIN_MS      = 1600;  // logo time at boot (any key skips)
 constexpr uint8_t kBrightness[]       = {30, 80, 150, 255};
+constexpr uint32_t DIM_BEFORE_OFF_MS  = 10000;  // dim this long before the screen goes off
+constexpr uint8_t DIM_LEVEL           = 10;
+
+// Screen power: On -> Dim (keys still work) -> Off (first key only wakes it).
+enum class Screen : uint8_t { On, Dim, Off };
 
 struct Held {
     Point2D_t pos;
@@ -84,8 +89,36 @@ out::Link g_lastLink   = out::Link::None;
 int g_battery          = -1;
 uint32_t g_nextBattery = 0;
 bool g_dirty           = true;
+Screen g_screen        = Screen::On;
+uint32_t g_lastActivity = 0;
 
 const Profile& profile() { return g_cfg.profiles[g_profile]; }
+
+// Counts as use: restores full brightness and restarts the idle timer.
+void screenWake()
+{
+    g_lastActivity = millis();
+    if (g_screen == Screen::On) return;
+    if (g_screen == Screen::Off) M5Cardputer.Display.wakeup();
+    ui::setBrightness(kBrightness[g_brightIdx]);
+    g_screen = Screen::On;
+    g_dirty  = true;
+}
+
+void updateScreen()
+{
+    const uint32_t offMs = g_cfg.screenOffS * 1000UL;
+    if (!offMs || g_screen == Screen::Off) return;
+    const uint32_t idle = millis() - g_lastActivity;
+    if (idle >= offMs) {
+        ui::setBrightness(0);
+        M5Cardputer.Display.sleep();
+        g_screen = Screen::Off;
+    } else if (g_screen == Screen::On && idle + DIM_BEFORE_OFF_MS >= offMs) {
+        ui::setBrightness(std::min(DIM_LEVEL, kBrightness[g_brightIdx]));
+        g_screen = Screen::Dim;
+    }
+}
 
 void notice(const String& text, bool alert = false, uint32_t ms = 2500)
 {
@@ -246,6 +279,7 @@ bool webSave(const String& text, const String& rev, String& msg)
     if (g_profile >= g_cfg.profiles.size()) g_profile = 0;
     g_scroll = 0;
     msg      = warnings;
+    screenWake();  // show what was saved (also applies a new screen timeout)
     notice("Saved from web (" + where + ")");
     return true;
 }
@@ -263,6 +297,7 @@ bool webRun(const String& text, String& msg)
     tmp.unicode       = g_cfg.unicode;
     tmp.typingDelayMs = g_cfg.typingDelayMs;
     const Macro& m    = tmp.profiles[0].macros[0];
+    screenWake();
     notice("> Test: " + m.label, false, 1500);
     render();
     if (!runMacro(m, tmp)) {
@@ -843,6 +878,7 @@ void handleKeys()
             } else if (mods.fn && !kbFnKey) {
                 g_held.push_back(h);
                 systemKey(kv.value_first);
+                g_lastActivity = millis();  // a menu may have been open for a while
                 return;  // dialogs may have changed the key state; rescan next loop
             } else {
                 String id      = keyId(kv, mods.shift);
@@ -999,15 +1035,24 @@ void setup()
     }
     absorbHeldKeys();
     render();
+    g_lastActivity = millis();
 }
 
 void loop()
 {
     M5Cardputer.update();
+    if (!M5Cardputer.Keyboard.keyList().empty()) {
+        // Held keys keep the screen on, so while it is off every key is a new
+        // press: that one only wakes the screen and does not run a macro.
+        const bool wasOff = g_screen == Screen::Off;
+        screenWake();
+        if (wasOff) absorbHeldKeys();
+    }
     handleKeys();
     web::loop();
     updateStatus();
-    if (g_dirty) render();
+    updateScreen();
+    if (g_dirty && g_screen != Screen::Off) render();
 #ifdef MACROPAD_DIAG
     static uint32_t nextLog = 0;
     if (millis() >= nextLog) {
